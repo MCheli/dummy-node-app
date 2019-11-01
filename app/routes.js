@@ -79,7 +79,6 @@ router.post('/catfacts', function (req, res) {
             });
             res.sendStatus(200)
 
-            connection.end()
         })
         .catch(function (err) {
             // Request Failed
