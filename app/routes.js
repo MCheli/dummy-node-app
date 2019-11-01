@@ -1,5 +1,15 @@
 const express = require('express');
 const router = express.Router();
+var mysql = require('mysql');
+var SqlString = require('sqlstring');
+
+
+var connection = mysql.createConnection({
+    host: 'db',
+    user: 'root',
+    password: 'example',
+    database: 'facts'
+});
 
 //Routes go here
 
@@ -8,42 +18,74 @@ module.exports = router;
 
 // Example endpoint
 
-router.get('/', function(req, res) {
-  res.send("Hello World")
+router.get('/', function (req, res) {
+    res.send("Hello World")
 });
 
-router.get('/catfacts', function(req, res) {
-    var http = require("https");
-
-    var options = {
-    "method": "GET",
-    "hostname": "cat-fact.herokuapp.com",
-    "path": "/facts",
-    "headers": {
-        "Accept": "*/*",
-        "Cache-Control": "no-cache",
-        "Host": "cat-fact.herokuapp.com",
-        "Accept-Encoding": "gzip, deflate",
-        "Cookie": "connect.sid=s%3AhkjRXScxR4S3z1OkUSdmoH4xITJXomXd.wSYWUg7u25WhPbuzmsFDxYxPJSysAKxp2FvM4g3v7CM",
-        "Connection": "keep-alive",
-        "cache-control": "no-cache"
-    }
-    };
-
-    var req = http.request(options, function (res) {
-        var chunks = [];
-
-        res.on("data", function (chunk) {
-            chunks.push(chunk);
-        });
-
-        res.on("end", function () {
-            var body = Buffer.concat(chunks);
-            console.log(body.toString());
-        });
+router.get('/catfacts', function (req, res) {
+    connection.connect(function (err) {
+        if (err) {
+            console.error('error connecting: ' + err.stack);
+            return;
+        }
     });
 
-    req.end();
+    var queryString = 'SELECT COUNT(*) FROM catfacts';
 
-    res.send("loading catfacts")
+    var totalFacts
+    var randomFact
+
+    connection.query(SqlString.format(queryString), function (err, rows, fields) {
+        if (err) throw err
+        
+        totalFacts = rows[0]['COUNT(*)'];
+        randomFact = Math.floor(Math.random() * totalFacts);
+        console.log(randomFact);
+
+        queryString = 'SELECT fact FROM catfacts WHERE id = ' + randomFact;
+
+        console.log(SqlString.format(queryString))
+    
+        connection.query(SqlString.format(queryString), function (err, rows, fields) {
+            if (err) throw err
+
+            res.send(rows[0]['fact']);
+            
+        })
+    })
+
+});
+
+router.post('/catfacts', function (req, res) {
+    var rp = require('request-promise');
+
+    var options = {
+        method: 'GET',
+        uri: 'https://cat-fact.herokuapp.com/facts',
+        json: true // Automatically stringifies the body to JSON
+    };
+
+    rp(options)
+        .then(function (body) {
+
+            connection.connect(function (err) {
+                if (err) {
+                    console.error('error connecting: ' + err.stack);
+                    return;
+                }
+            });
+
+            body.all.forEach(element => {
+                var queryString = 'INSERT INTO catfacts (fact) VALUES (' + SqlString.escape(element.text) + ')';
+                connection.query(SqlString.format(queryString), function (err, rows, fields) {
+                    if (err) throw err
+                })
+            });
+            res.sendStatus(200)
+
+            connection.end()
+        })
+        .catch(function (err) {
+            // Request Failed
+        });
 })
