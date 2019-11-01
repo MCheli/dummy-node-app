@@ -11,6 +11,13 @@ var connection = mysql.createConnection({
     database: 'facts'
 });
 
+connection.connect(function (err) {
+    if (err) {
+        console.error('error connecting: ' + err.stack);
+        return;
+    }
+});
+
 //Routes go here
 
 module.exports = router;
@@ -23,12 +30,6 @@ router.get('/', function (req, res) {
 });
 
 router.get('/catfacts', function (req, res) {
-    connection.connect(function (err) {
-        if (err) {
-            console.error('error connecting: ' + err.stack);
-            return;
-        }
-    });
 
     var queryString = 'SELECT COUNT(*) FROM catfacts';
 
@@ -40,20 +41,15 @@ router.get('/catfacts', function (req, res) {
         
         totalFacts = rows[0]['COUNT(*)'];
         randomFact = Math.floor(Math.random() * totalFacts);
-        console.log(randomFact);
 
         queryString = 'SELECT fact FROM catfacts WHERE id = ' + randomFact;
-
-        console.log(SqlString.format(queryString))
     
         connection.query(SqlString.format(queryString), function (err, rows, fields) {
             if (err) throw err
 
             res.send(rows[0]['fact']);
-            
         })
     })
-
 });
 
 router.post('/catfacts', function (req, res) {
