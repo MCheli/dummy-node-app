@@ -1,0 +1,58 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: dummy-node-app-db
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: dummy-node-app-db
+    spec:
+      containers:
+      - image: mysql
+        name: dummy-node-app-db
+        env: 
+          - name: MYSQL_ROOT_PASSWORD 
+            value: example
+          - name: MYSQL_DATABASE
+            value: "facts"
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+          - name: mysql-config-volume
+            mountPath: /etc/mysql/conf.d/default_auth.cnf
+            subPath: default
+      volumes: 
+      - name: mysql-config-volume
+        configMap: 
+          name: mysql-config
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: dummy-node-app-db-service
+  labels:
+    app: dummy-node-app-db
+spec:
+  ports:
+    - port: 3306
+  selector:
+    app: dummy-node-app-db
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  ## name of ConfigMap. This will be referred from volume definition
+  name: mysql-config
+  labels:
+    app: mysql
+data:
+  ## default_auth is the name of config. This will be referred from volume mount definition
+  default_auth: |
+    [mysqld]
+    default_authentication_plugin= mysql_native_password

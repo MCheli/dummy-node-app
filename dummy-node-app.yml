@@ -1,0 +1,16 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: dummy-node-app
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: dummy-node-app
+    spec:
+      containers:
+      - image: 959716051651.dkr.ecr.us-west-2.amazonaws.com/mcheli/dummy-node-app:latest  
+        name: dummy-node-app
+        ports:
+        - containerPort: 80

@@ -5,7 +5,7 @@ var SqlString = require('sqlstring');
 
 
 var connection = mysql.createConnection({
-    host: 'db',
+    host: 'dummy-node-app-db-service',
     user: 'root',
     password: 'example',
     database: 'facts'
