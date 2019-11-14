@@ -10,7 +10,7 @@ spec:
         app: dummy-node-app-db
     spec:
       containers:
-      - image: mysql
+      - image: mysql:5
         name: dummy-node-app-db
         env: 
           - name: MYSQL_ROOT_PASSWORD 
@@ -19,14 +19,6 @@ spec:
             value: "facts"
         ports:
         - containerPort: 3306
-        volumeMounts:
-          - name: mysql-config-volume
-            mountPath: /etc/mysql/conf.d/default_auth.cnf
-            subPath: default
-      volumes: 
-      - name: mysql-config-volume
-        configMap: 
-          name: mysql-config
 
 ---
 
